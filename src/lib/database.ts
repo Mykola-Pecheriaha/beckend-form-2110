@@ -3,10 +3,9 @@ import { Pool } from 'pg'
 // Database connection with fallback support
 const createDatabasePool = () => {
   // Try multiple environment variables
-  const databaseUrl =
+  const databaseUrl = 
     process.env.DB_CONNECTION_STRING ||
     process.env.DATABASE_URL ||
-    process.env.POSTGRES_PRISMA_URL ||
     process.env.POSTGRES_URL ||
     'postgresql://postgres:postgres@localhost:5432/medical_consultations'
 
@@ -14,15 +13,12 @@ const createDatabasePool = () => {
     environment: process.env.NODE_ENV,
     vercel: !!process.env.VERCEL,
     urlType: databaseUrl.split(':')[0],
-    hasConnection: !!databaseUrl,
+    hasConnection: !!databaseUrl
   })
 
   return new Pool({
     connectionString: databaseUrl,
-    ssl:
-      process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
@@ -57,24 +53,18 @@ export interface Consultation {
 export const consultationQueries = {
   // Get all consultations
   async getAll(): Promise<Consultation[]> {
-    const result = await db.query(
-      'SELECT * FROM consultations ORDER BY created_at DESC'
-    )
+    const result = await db.query('SELECT * FROM consultations ORDER BY created_at DESC')
     return result.rows
   },
 
   // Get consultation by ID
   async getById(id: number): Promise<Consultation | null> {
-    const result = await db.query('SELECT * FROM consultations WHERE id = $1', [
-      id,
-    ])
+    const result = await db.query('SELECT * FROM consultations WHERE id = $1', [id])
     return result.rows[0] || null
   },
 
   // Create new consultation
-  async create(
-    data: Omit<Consultation, 'id' | 'created_at'>
-  ): Promise<Consultation> {
+  async create(data: Omit<Consultation, 'id' | 'created_at'>): Promise<Consultation> {
     const query = `
       INSERT INTO consultations (
         name, age, gender, phone, height, weight, complaints, examinations,
@@ -83,24 +73,12 @@ export const consultationQueries = {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *
     `
-
+    
     const values = [
-      data.name,
-      data.age,
-      data.gender,
-      data.phone,
-      data.height,
-      data.weight,
-      data.complaints,
-      data.examinations,
-      data.chronic_diseases,
-      data.has_chronic_diseases,
-      data.medications,
-      data.takes_medications,
-      data.pain_level,
-      data.has_allergy,
-      data.allergies,
-      data.additional_notes,
+      data.name, data.age, data.gender, data.phone, data.height, data.weight,
+      data.complaints, data.examinations, data.chronic_diseases, data.has_chronic_diseases,
+      data.medications, data.takes_medications, data.pain_level, data.has_allergy,
+      data.allergies, data.additional_notes
     ]
 
     const result = await db.query(query, values)
@@ -108,15 +86,10 @@ export const consultationQueries = {
   },
 
   // Update consultation
-  async update(
-    id: number,
-    data: Partial<Omit<Consultation, 'id' | 'created_at'>>
-  ): Promise<Consultation | null> {
-    const fields = Object.keys(data)
-      .map((key, index) => `${key} = $${index + 2}`)
-      .join(', ')
+  async update(id: number, data: Partial<Omit<Consultation, 'id' | 'created_at'>>): Promise<Consultation | null> {
+    const fields = Object.keys(data).map((key, index) => `${key} = $${index + 2}`).join(', ')
     const values = [id, ...Object.values(data)]
-
+    
     const query = `UPDATE consultations SET ${fields} WHERE id = $1 RETURNING *`
     const result = await db.query(query, values)
     return result.rows[0] || null
@@ -124,9 +97,7 @@ export const consultationQueries = {
 
   // Delete consultation
   async delete(id: number): Promise<boolean> {
-    const result = await db.query('DELETE FROM consultations WHERE id = $1', [
-      id,
-    ])
+    const result = await db.query('DELETE FROM consultations WHERE id = $1', [id])
     return (result.rowCount || 0) > 0
   },
 
@@ -137,15 +108,15 @@ export const consultationQueries = {
   },
 
   // Test connection
-  async testConnection(): Promise<{ success: boolean; error?: string }> {
+  async testConnection(): Promise<{ success: boolean, error?: string }> {
     try {
       await db.query('SELECT 1')
       return { success: true }
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error'
       }
     }
-  },
+  }
 }

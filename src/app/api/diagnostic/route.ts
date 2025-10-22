@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { consultationQueries } from '@/lib/database'
 
 export async function GET() {
   const diagnostics = {
@@ -17,28 +18,29 @@ export async function GET() {
       nodeVersion: process.version,
       cwd: process.cwd(),
     },
-    files: {
-      schemaExists: false,
-      schemaContent: 'N/A',
+    database: {
+      type: 'PostgreSQL (direct client)',
+      connection: 'unknown',
+      consultationsCount: 0,
     },
   }
 
-  // Try to read schema file
+  // Test database connection
   try {
-    const fs = await import('fs')
-    const path = await import('path')
-
-    const schemaPath = path.join(process.cwd(), 'prisma', 'schema.prisma')
-    if (fs.existsSync(schemaPath)) {
-      diagnostics.files.schemaExists = true
-      diagnostics.files.schemaContent = fs.readFileSync(schemaPath, 'utf-8')
+    const connectionTest = await consultationQueries.testConnection()
+    if (connectionTest.success) {
+      diagnostics.database.connection = 'successful'
+      diagnostics.database.consultationsCount = await consultationQueries.count()
+    } else {
+      diagnostics.database.connection = `failed: ${connectionTest.error}`
     }
   } catch (error) {
-    diagnostics.files.schemaContent = `Error reading schema: ${error}`
+    diagnostics.database.connection = `error: ${error instanceof Error ? error.message : 'Unknown error'}`
   }
 
   return NextResponse.json({
     status: 'diagnostic',
+    message: 'PostgreSQL Direct Client - No Prisma dependencies',
     data: diagnostics,
   })
 }
