@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "build": "./scripts/ultimate-fix.sh",
+    "build": "./scripts/zero-schema-build.sh",
+    "build:ultimate": "./scripts/ultimate-fix.sh",
     "build:minimal": "./scripts/minimal-build.sh",
     "build:ultra": "./scripts/ultra-safe-build.sh",
     "build:safe": "./scripts/vercel-build.sh",
@@ -14,6 +15,7 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "postinstall": "./scripts/postinstall.sh",
+    "diagnostic": "./scripts/emergency-diagnostic.sh",
     "clean:prisma": "./scripts/clear-prisma-cache.sh",
     "test:api": "./scripts/test-api.sh",
     "deploy:migrations": "./scripts/deploy-migrations.sh",

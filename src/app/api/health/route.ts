@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { testPrismaConnection } from '@/lib/prisma-programmatic'
 
 export async function GET() {
   const healthInfo = {
@@ -9,11 +9,12 @@ export async function GET() {
     database: 'unknown',
     consultationsCount: 0,
     timestamp: new Date().toISOString(),
-    diagnostics: {} as any
+    diagnostics: {} as any,
+    connectionTest: {} as any
   }
 
   try {
-    console.log('=== Health Check ===')
+    console.log('=== Health Check with Programmatic Prisma ===')
     console.log('Environment:', process.env.NODE_ENV)
     console.log('VERCEL_ENV:', process.env.VERCEL_ENV)
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
@@ -23,61 +24,48 @@ export async function GET() {
       databaseUrlExists: !!process.env.DATABASE_URL,
       databaseType: process.env.DATABASE_URL ? process.env.DATABASE_URL.split(':')[0] : 'unknown',
       nodeVersion: process.version,
-      platform: process.platform
+      platform: process.platform,
+      vercel: process.env.VERCEL || 'false'
     }
 
-    // Спробуємо підключитися до бази
-    console.log('Attempting database connection...')
-    await prisma.$connect()
-    console.log('✅ Database connected successfully')
-    healthInfo.database = 'connected'
+    // Test programmatic Prisma connection
+    console.log('Testing programmatic Prisma connection...')
+    const connectionResult = await testPrismaConnection()
+    healthInfo.connectionTest = connectionResult
 
-    // Спробуємо виконати простий запит
-    console.log('Testing table access...')
-    const count = await prisma.consultation.count()
-    console.log('✅ Consultations table accessible, count:', count)
-    
-    healthInfo.consultationsCount = count
-    healthInfo.status = 'ok'
+    if (connectionResult.success) {
+      healthInfo.status = 'ok'
+      healthInfo.database = 'connected'
+      
+      // Try to import regular prisma client as fallback
+      try {
+        const { prisma } = await import('@/lib/prisma-programmatic')
+        const count = await prisma.consultation.count()
+        healthInfo.consultationsCount = count
+        console.log('✅ Consultation count:', count)
+      } catch (countError) {
+        console.warn('Could not count consultations:', countError)
+        healthInfo.diagnostics.countError = countError instanceof Error ? countError.message : 'Unknown error'
+      }
+    } else {
+      healthInfo.status = 'error'
+      healthInfo.database = 'disconnected'
+      healthInfo.diagnostics.connectionError = connectionResult.error
+    }
 
-    // Спробуємо отримати одну консультацію для тесту
-    const latestConsultation = await prisma.consultation.findFirst({
-      orderBy: { createdAt: 'desc' }
-    })
-    
-    healthInfo.diagnostics.hasData = !!latestConsultation
-    healthInfo.diagnostics.latestConsultationDate = latestConsultation?.createdAt
-
-    console.log('Health check completed successfully')
+    console.log('Health check completed:', healthInfo.status)
     
     return NextResponse.json(healthInfo)
     
   } catch (error) {
     console.error('Health check failed:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    const errorCode = (error as any)?.code || 'UNKNOWN'
     
     healthInfo.status = 'error'
     healthInfo.database = 'disconnected'
     healthInfo.diagnostics.error = errorMessage
-    healthInfo.diagnostics.errorCode = errorCode
     healthInfo.diagnostics.errorStack = error instanceof Error ? error.stack : undefined
 
-    // Спеціальна діагностика для різних типів помилок
-    if (errorMessage.includes('does not exist')) {
-      healthInfo.diagnostics.suggestion = 'Таблиця не існує - потрібно запустити міграції'
-    } else if (errorMessage.includes('connect')) {
-      healthInfo.diagnostics.suggestion = 'Проблема підключення до бази даних'
-    } else if (errorMessage.includes('timeout')) {
-      healthInfo.diagnostics.suggestion = 'Таймаут підключення до бази даних'
-    }
-
     return NextResponse.json(healthInfo, { status: 500 })
-  } finally {
-    try {
-      await prisma.$disconnect()
-    } catch (disconnectError) {
-      console.warn('Warning: Could not disconnect from database:', disconnectError)
-    }
   }
 }
