@@ -56,7 +56,9 @@ export async function GET() {
     const consultations = await consultationQueries.getAll()
     const result = consultations.map(consultation => ({
       ...consultation,
-      examinations: consultation.examinations ? JSON.parse(consultation.examinations) : [],
+      examinations: consultation.examinations
+        ? JSON.parse(consultation.examinations)
+        : [],
     }))
     return NextResponse.json(result)
   } catch (error) {

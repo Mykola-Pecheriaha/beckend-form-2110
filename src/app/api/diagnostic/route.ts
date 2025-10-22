@@ -30,7 +30,8 @@ export async function GET() {
     const connectionTest = await consultationQueries.testConnection()
     if (connectionTest.success) {
       diagnostics.database.connection = 'successful'
-      diagnostics.database.consultationsCount = await consultationQueries.count()
+      diagnostics.database.consultationsCount =
+        await consultationQueries.count()
     } else {
       diagnostics.database.connection = `failed: ${connectionTest.error}`
     }

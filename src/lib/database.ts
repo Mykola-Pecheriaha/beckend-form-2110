@@ -107,16 +107,61 @@ export const consultationQueries = {
     return parseInt(result.rows[0].count)
   },
 
-  // Test connection
+  // Test connection and create table if not exists
   async testConnection(): Promise<{ success: boolean, error?: string }> {
     try {
       await db.query('SELECT 1')
+      
+      // Try to create table if it doesn't exist
+      await this.createTableIfNotExists()
+      
       return { success: true }
     } catch (error) {
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error'
       }
+    }
+  },
+
+  // Create consultations table if it doesn't exist
+  async createTableIfNotExists(): Promise<void> {
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS consultations (
+        id SERIAL PRIMARY KEY,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        
+        -- Patient Information
+        name VARCHAR(255) NOT NULL,
+        age INTEGER,
+        gender VARCHAR(50),
+        phone VARCHAR(100),
+        height INTEGER,
+        weight INTEGER,
+        
+        -- Medical Information
+        complaints TEXT,
+        examinations TEXT,
+        
+        -- Medical History
+        chronic_diseases TEXT,
+        has_chronic_diseases BOOLEAN DEFAULT FALSE,
+        medications TEXT,
+        takes_medications BOOLEAN DEFAULT FALSE,
+        
+        -- Additional Information
+        pain_level INTEGER,
+        has_allergy BOOLEAN DEFAULT FALSE,
+        allergies TEXT,
+        additional_notes TEXT
+      )
+    `
+    
+    try {
+      await db.query(createTableQuery)
+      console.log('✅ Consultations table ready')
+    } catch (error) {
+      console.warn('⚠️ Could not create table:', error)
     }
   }
 }
