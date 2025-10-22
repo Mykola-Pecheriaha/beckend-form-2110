@@ -6,6 +6,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     console.log('=== POST /api/consultations ===')
+    console.log('Environment:', process.env.NODE_ENV)
+    console.log('VERCEL_ENV:', process.env.VERCEL_ENV) 
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
     console.log('Received data:', body)
 
     // Валідація обов'язкових полів
@@ -14,6 +17,37 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Відсутні обов'язкові поля: ім'я та стать" },
         { status: 400 }
+      )
+    }
+
+    // Тест підключення до бази даних
+    try {
+      await prisma.$connect()
+      console.log('✅ Database connection successful')
+    } catch (dbError) {
+      console.error('❌ Database connection failed:', dbError)
+      return NextResponse.json(
+        { 
+          error: 'Помилка підключення до бази даних',
+          details: dbError instanceof Error ? dbError.message : 'Unknown DB error'
+        },
+        { status: 500 }
+      )
+    }
+
+    // Перевіримо чи існує таблиця консультацій
+    try {
+      const tableExists = await prisma.consultation.count()
+      console.log('✅ Consultations table exists, count:', tableExists)
+    } catch (tableError) {
+      console.error('❌ Consultations table check failed:', tableError)
+      return NextResponse.json(
+        { 
+          error: 'Таблиця консультацій не існує або недоступна',
+          details: tableError instanceof Error ? tableError.message : 'Unknown table error',
+          hint: 'Можливо потрібно запустити міграції: npx prisma migrate deploy'
+        },
+        { status: 500 }
       )
     }
 
@@ -33,10 +67,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, id: consultation.id })
   } catch (error) {
     console.error('Error in POST:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
     return NextResponse.json(
-      { error: 'Помилка створення консультації' },
+      { 
+        error: 'Помилка створення консультації',
+        details: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
+      },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 export async function GET() {
