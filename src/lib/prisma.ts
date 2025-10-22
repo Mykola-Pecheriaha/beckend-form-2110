@@ -20,13 +20,26 @@ const createPrismaClient = () => {
     databaseUrl: process.env.DATABASE_URL ? '***CONFIGURED***' : 'NOT_SET',
   })
 
-  // Динамічно визначаємо URL бази даних
-  let databaseUrl = process.env.DB_CONNECTION_STRING || process.env.DATABASE_URL
+  // Динамічно визначаємо URL бази даних з множинними fallback варіантами
+  let databaseUrl = 
+    process.env.DB_CONNECTION_STRING || 
+    process.env.DATABASE_URL || 
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL
+
+  console.log('Database URL resolution:', {
+    dbConnectionString: !!process.env.DB_CONNECTION_STRING,
+    databaseUrl: !!process.env.DATABASE_URL,
+    postgresPrismaUrl: !!process.env.POSTGRES_PRISMA_URL,
+    postgresUrl: !!process.env.POSTGRES_URL,
+    resolved: !!databaseUrl,
+    urlType: databaseUrl ? databaseUrl.split(':')[0] : 'none'
+  })
 
   if (!databaseUrl) {
     if (isProduction) {
       throw new Error(
-        'DB_CONNECTION_STRING or DATABASE_URL is required in production environment'
+        'No database URL found! Please set one of: DB_CONNECTION_STRING, DATABASE_URL, POSTGRES_PRISMA_URL, or POSTGRES_URL in Vercel environment variables'
       )
     } else {
       // Для розробки використовуємо SQLite

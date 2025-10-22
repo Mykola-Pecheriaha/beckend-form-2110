@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Auto-generated Prisma schema
+// Provider: sqlite, Env: DATABASE_URL
 
 generator client {
   provider = "prisma-client-js"
@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DB_CONNECTION_STRING")
+  url      = env("DATABASE_URL")
 }
 
 model Consultation {
