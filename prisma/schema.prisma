@@ -14,32 +14,25 @@ model Consultation {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   
-  // Інформація про пацієнта
   name      String
   age       Int?
   gender    String
   phone     String?
-  height    Int?     // см
-  weight    Int?     // кг
+  height    Int?
+  weight    Int?
   
-  // Скарги пацієнта
   complaints String?
+  examinations String?
   
-  // Обстеження
-  examinations String? // JSON string з обстеженнями
-  
-  // Медична історія
-  chronicDiseases    String? // хронічні хвороби
+  chronicDiseases    String?
   hasChronicDiseases Boolean @default(false)
-  medications        String? // ліки
+  medications        String?
   takesMedications   Boolean @default(false)
   
-  // Рівень болю та алергії
-  painLevel Int?      // 0-10
+  painLevel Int?
   hasAllergy Boolean @default(false)
   allergies  String?
   
-  // Додаткові коментарі
   additionalNotes String?
   
   @@map("consultations")

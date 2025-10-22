@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "build": "./scripts/vercel-build.sh",
+    "build": "./scripts/minimal-build.sh",
+    "build:ultra": "./scripts/ultra-safe-build.sh",
+    "build:safe": "./scripts/vercel-build.sh",
     "build:emergency": "./scripts/emergency-fix.sh",
     "build:local": "prisma generate && next build",
     "start": "next start",
