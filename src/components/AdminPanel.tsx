@@ -68,7 +68,8 @@ export default function AdminPanel() {
       setConsultations(consultationsWithBMI)
     } catch (error) {
       console.error('AdminPanel: Error fetching consultations:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Невідома помилка'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Невідома помилка'
       alert(`Помилка завантаження консультацій: ${errorMessage}`)
     } finally {
       setLoading(false)

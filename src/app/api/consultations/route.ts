@@ -44,7 +44,7 @@ export async function GET() {
     console.log('=== GET /api/consultations ===')
     console.log('Environment:', process.env.NODE_ENV)
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
-    
+
     const consultations = await prisma.consultation.findMany({
       orderBy: { createdAt: 'desc' },
     })
@@ -66,18 +66,19 @@ export async function GET() {
       consultationsWithParsedExaminations.length
     )
     console.log('Processed consultations:', consultationsWithParsedExaminations)
-    
+
     return NextResponse.json(consultationsWithParsedExaminations)
   } catch (error) {
     console.error('Error fetching consultations:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error'
     const errorStack = error instanceof Error ? error.stack : undefined
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch consultations',
         details: errorMessage,
-        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
       },
       { status: 500 }
     )
