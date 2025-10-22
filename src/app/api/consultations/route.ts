@@ -9,10 +9,10 @@ export async function POST(request: Request) {
     console.log('Received data:', body)
 
     // Валідація обов'язкових полів
-    if (!body.name || !body.gender || !body.phone) {
+    if (!body.name || !body.gender) {
       console.log('Validation failed - missing required fields')
       return NextResponse.json(
-        { error: "Відсутні обов'язкові поля" },
+        { error: "Відсутні обов'язкові поля: ім'я та стать" },
         { status: 400 }
       )
     }
@@ -42,9 +42,14 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     console.log('=== GET /api/consultations ===')
+    console.log('Environment:', process.env.NODE_ENV)
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
+    
     const consultations = await prisma.consultation.findMany({
       orderBy: { createdAt: 'desc' },
     })
+
+    console.log('Raw consultations from DB:', consultations)
 
     // Перетворюємо JSON рядки examinations назад в масиви
     const consultationsWithParsedExaminations = consultations.map(
@@ -60,11 +65,20 @@ export async function GET() {
       'Found consultations:',
       consultationsWithParsedExaminations.length
     )
+    console.log('Processed consultations:', consultationsWithParsedExaminations)
+    
     return NextResponse.json(consultationsWithParsedExaminations)
   } catch (error) {
     console.error('Error fetching consultations:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
     return NextResponse.json(
-      { error: 'Failed to fetch consultations' },
+      { 
+        error: 'Failed to fetch consultations',
+        details: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
+      },
       { status: 500 }
     )
   }

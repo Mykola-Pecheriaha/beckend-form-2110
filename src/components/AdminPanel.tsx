@@ -18,9 +18,22 @@ export default function AdminPanel() {
       console.log('=== AdminPanel: Fetching consultations ===')
       const response = await fetch('/api/consultations')
       console.log('AdminPanel: Response status:', response.status)
+      console.log('AdminPanel: Response headers:', response.headers)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('AdminPanel: Error response:', errorText)
+        throw new Error(`HTTP ${response.status}: ${errorText}`)
+      }
 
       const data = await response.json()
       console.log('AdminPanel: Raw data received:', data)
+
+      // Перевірка чи data це масив
+      if (!Array.isArray(data)) {
+        console.error('AdminPanel: Expected array but got:', typeof data, data)
+        throw new Error('Отримані дані не є масивом консультацій')
+      }
 
       // Обчислити ІМТ для кожної консультації
       const consultationsWithBMI = data.map((consultation: any) => {
@@ -55,6 +68,8 @@ export default function AdminPanel() {
       setConsultations(consultationsWithBMI)
     } catch (error) {
       console.error('AdminPanel: Error fetching consultations:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Невідома помилка'
+      alert(`Помилка завантаження консультацій: ${errorMessage}`)
     } finally {
       setLoading(false)
     }
