@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbo",
     "build": "./scripts/vercel-build.sh",
+    "build:emergency": "./scripts/emergency-fix.sh",
     "build:local": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
