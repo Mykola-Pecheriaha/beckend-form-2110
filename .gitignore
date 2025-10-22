@@ -13,3 +13,5 @@ build/
 .turbo/
 prisma/dev.db
 prisma/dev.db-journal
+prisma/schema.sqlite.backup
+prisma/schema.temp.prisma
