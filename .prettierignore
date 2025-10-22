@@ -1,0 +1,13 @@
+node_modules
+.next
+.vercel
+*.log
+.env*
+.git
+.github
+dist
+build
+public
+*.md
+package-lock.json
+yarn.lock
