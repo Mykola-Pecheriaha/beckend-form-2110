@@ -21,9 +21,9 @@ const createPrismaClient = () => {
   })
 
   // Динамічно визначаємо URL бази даних з множинними fallback варіантами
-  let databaseUrl = 
-    process.env.DB_CONNECTION_STRING || 
-    process.env.DATABASE_URL || 
+  let databaseUrl =
+    process.env.DB_CONNECTION_STRING ||
+    process.env.DATABASE_URL ||
     process.env.POSTGRES_PRISMA_URL ||
     process.env.POSTGRES_URL
 
@@ -33,7 +33,7 @@ const createPrismaClient = () => {
     postgresPrismaUrl: !!process.env.POSTGRES_PRISMA_URL,
     postgresUrl: !!process.env.POSTGRES_URL,
     resolved: !!databaseUrl,
-    urlType: databaseUrl ? databaseUrl.split(':')[0] : 'none'
+    urlType: databaseUrl ? databaseUrl.split(':')[0] : 'none',
   })
 
   if (!databaseUrl) {

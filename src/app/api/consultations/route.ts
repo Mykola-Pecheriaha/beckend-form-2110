@@ -1,133 +1,68 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { ConsultationFormData } from '@/types/consultation'
+import { NextResponse } from 'next/server'
+import { consultationQueries } from '@/lib/database'
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     console.log('=== POST /api/consultations ===')
-    console.log('Environment:', process.env.NODE_ENV)
-    console.log('VERCEL_ENV:', process.env.VERCEL_ENV)
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
-    console.log('Received data:', body)
 
-    // Валідація обов'язкових полів
     if (!body.name || !body.gender) {
-      console.log('Validation failed - missing required fields')
       return NextResponse.json(
         { error: "Відсутні обов'язкові поля: ім'я та стать" },
         { status: 400 }
       )
     }
 
-    // Тест підключення до бази даних
-    try {
-      await prisma.$connect()
-      console.log('✅ Database connection successful')
-    } catch (dbError) {
-      console.error('❌ Database connection failed:', dbError)
+    const connectionTest = await consultationQueries.testConnection()
+    if (!connectionTest.success) {
       return NextResponse.json(
-        {
-          error: 'Помилка підключення до бази даних',
-          details:
-            dbError instanceof Error ? dbError.message : 'Unknown DB error',
-        },
+        { error: 'Помилка підключення до бази даних' },
         { status: 500 }
       )
     }
 
-    // Перевіримо чи існує таблиця консультацій
-    try {
-      const tableExists = await prisma.consultation.count()
-      console.log('✅ Consultations table exists, count:', tableExists)
-    } catch (tableError) {
-      console.error('❌ Consultations table check failed:', tableError)
-      return NextResponse.json(
-        {
-          error: 'Таблиця консультацій не існує або недоступна',
-          details:
-            tableError instanceof Error
-              ? tableError.message
-              : 'Unknown table error',
-          hint: 'Можливо потрібно запустити міграції: npx prisma migrate deploy',
-        },
-        { status: 500 }
-      )
-    }
-
-    // Перетворюємо дані для збереження в базу
     const consultationData = {
-      ...body,
-      painLevel: parseInt(body.painLevel, 10) || 0,
-      examinations: JSON.stringify(body.examinations || []), // Перетворюємо масив в JSON рядок
+      name: body.name,
+      age: parseInt(body.age, 10) || null,
+      gender: body.gender,
+      phone: body.phone || null,
+      height: parseInt(body.height, 10) || null,
+      weight: parseInt(body.weight, 10) || null,
+      complaints: body.complaints || null,
+      examinations: JSON.stringify(body.examinations || []),
+      chronic_diseases: body.chronicDiseases || null,
+      has_chronic_diseases: !!body.hasChronicDiseases,
+      medications: body.medications || null,
+      takes_medications: !!body.takesMedications,
+      pain_level: parseInt(body.painLevel, 10) || null,
+      has_allergy: !!body.hasAllergy,
+      allergies: body.allergies || null,
+      additional_notes: body.additionalNotes || null,
     }
 
-    console.log('Creating consultation with data:', consultationData)
-    const consultation = await prisma.consultation.create({
-      data: consultationData,
-    })
-
-    console.log('Created consultation:', consultation)
+    const consultation = await consultationQueries.create(consultationData)
     return NextResponse.json({ success: true, id: consultation.id })
   } catch (error) {
     console.error('Error in POST:', error)
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error'
-    const errorStack = error instanceof Error ? error.stack : undefined
-
     return NextResponse.json(
-      {
-        error: 'Помилка створення консультації',
-        details: errorMessage,
-        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
-      },
+      { error: 'Помилка створення консультації' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
+
 export async function GET() {
   try {
-    console.log('=== GET /api/consultations ===')
-    console.log('Environment:', process.env.NODE_ENV)
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
-
-    const consultations = await prisma.consultation.findMany({
-      orderBy: { createdAt: 'desc' },
-    })
-
-    console.log('Raw consultations from DB:', consultations)
-
-    // Перетворюємо JSON рядки examinations назад в масиви
-    const consultationsWithParsedExaminations = consultations.map(
-      consultation => ({
-        ...consultation,
-        examinations: consultation.examinations
-          ? JSON.parse(consultation.examinations)
-          : [],
-      })
-    )
-
-    console.log(
-      'Found consultations:',
-      consultationsWithParsedExaminations.length
-    )
-    console.log('Processed consultations:', consultationsWithParsedExaminations)
-
-    return NextResponse.json(consultationsWithParsedExaminations)
+    const consultations = await consultationQueries.getAll()
+    const result = consultations.map(consultation => ({
+      ...consultation,
+      examinations: consultation.examinations ? JSON.parse(consultation.examinations) : [],
+    }))
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching consultations:', error)
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error'
-    const errorStack = error instanceof Error ? error.stack : undefined
-
     return NextResponse.json(
-      {
-        error: 'Failed to fetch consultations',
-        details: errorMessage,
-        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
-      },
+      { error: 'Failed to fetch consultations' },
       { status: 500 }
     )
   }
@@ -145,19 +80,15 @@ export async function DELETE(request: Request) {
       )
     }
 
-    console.log('=== DELETE /api/consultations ===')
-    console.log('Deleting consultation with ID:', id)
-
-    const deletedConsultation = await prisma.consultation.delete({
-      where: { id: parseInt(id, 10) },
-    })
-
-    console.log('Deleted consultation:', deletedConsultation)
-    return NextResponse.json({
-      success: true,
-      message: 'Консультацію видалено успішно',
-      id: deletedConsultation.id,
-    })
+    const deleted = await consultationQueries.delete(parseInt(id, 10))
+    if (deleted) {
+      return NextResponse.json({ success: true })
+    } else {
+      return NextResponse.json(
+        { error: 'Консультацію не знайдено' },
+        { status: 404 }
+      )
+    }
   } catch (error) {
     console.error('Error deleting consultation:', error)
     return NextResponse.json(

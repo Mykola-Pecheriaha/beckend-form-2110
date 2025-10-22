@@ -4,20 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "build": "prisma generate && next build",
-    "vercel-build": "chmod +x scripts/generate-schema.sh && ./scripts/generate-schema.sh && prisma generate && SKIP_ENV_VALIDATION=true next build",
+    "build": "next build",
+    "vercel-build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write .",
-    "postinstall": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@prisma/client": "^5.6.0",
+    "@types/pg": "^8.15.5",
     "next": "14.0.2",
+    "pg": "^8.16.3",
     "prisma": "^5.6.0",
     "react": "^18",
     "react-dom": "^18"
