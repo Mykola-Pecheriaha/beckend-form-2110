@@ -6,21 +6,28 @@ const globalForPrisma = globalThis as unknown as {
 
 // Створюємо Prisma клієнт з правильною конфігурацією для середовища
 const createPrismaClient = () => {
-  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
-  
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    process.env.VERCEL_ENV === 'production'
+
   console.log('Prisma client initialization:', {
     environment: process.env.NODE_ENV,
     vercelEnv: process.env.VERCEL_ENV,
     isProduction,
+    dbConnectionString: process.env.DB_CONNECTION_STRING
+      ? '***CONFIGURED***'
+      : 'NOT_SET',
     databaseUrl: process.env.DATABASE_URL ? '***CONFIGURED***' : 'NOT_SET',
   })
 
   // Динамічно визначаємо URL бази даних
-  let databaseUrl = process.env.DATABASE_URL
-  
+  let databaseUrl = process.env.DB_CONNECTION_STRING || process.env.DATABASE_URL
+
   if (!databaseUrl) {
     if (isProduction) {
-      throw new Error('DATABASE_URL is required in production environment')
+      throw new Error(
+        'DB_CONNECTION_STRING or DATABASE_URL is required in production environment'
+      )
     } else {
       // Для розробки використовуємо SQLite
       databaseUrl = 'file:./dev.db'
@@ -28,12 +35,15 @@ const createPrismaClient = () => {
   }
 
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'info', 'warn', 'error']
+        : ['error'],
     datasources: {
       db: {
-        url: databaseUrl
-      }
-    }
+        url: databaseUrl,
+      },
+    },
   })
 }
 

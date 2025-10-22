@@ -8,24 +8,26 @@ export async function GET() {
       VERCEL_ENV: process.env.VERCEL_ENV,
       VERCEL: process.env.VERCEL,
       databaseUrlExists: !!process.env.DATABASE_URL,
-      databaseUrlPrefix: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 20) + '...' : 'N/A'
+      databaseUrlPrefix: process.env.DATABASE_URL
+        ? process.env.DATABASE_URL.substring(0, 20) + '...'
+        : 'N/A',
     },
     system: {
       platform: process.platform,
       nodeVersion: process.version,
-      cwd: process.cwd()
+      cwd: process.cwd(),
     },
     files: {
       schemaExists: false,
-      schemaContent: 'N/A'
-    }
+      schemaContent: 'N/A',
+    },
   }
 
   // Try to read schema file
   try {
     const fs = await import('fs')
     const path = await import('path')
-    
+
     const schemaPath = path.join(process.cwd(), 'prisma', 'schema.prisma')
     if (fs.existsSync(schemaPath)) {
       diagnostics.files.schemaExists = true
@@ -37,6 +39,6 @@ export async function GET() {
 
   return NextResponse.json({
     status: 'diagnostic',
-    data: diagnostics
+    data: diagnostics,
   })
 }

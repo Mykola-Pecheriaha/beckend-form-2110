@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     console.log('=== POST /api/consultations ===')
     console.log('Environment:', process.env.NODE_ENV)
-    console.log('VERCEL_ENV:', process.env.VERCEL_ENV) 
+    console.log('VERCEL_ENV:', process.env.VERCEL_ENV)
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
     console.log('Received data:', body)
 
@@ -27,9 +27,10 @@ export async function POST(request: Request) {
     } catch (dbError) {
       console.error('❌ Database connection failed:', dbError)
       return NextResponse.json(
-        { 
+        {
           error: 'Помилка підключення до бази даних',
-          details: dbError instanceof Error ? dbError.message : 'Unknown DB error'
+          details:
+            dbError instanceof Error ? dbError.message : 'Unknown DB error',
         },
         { status: 500 }
       )
@@ -42,10 +43,13 @@ export async function POST(request: Request) {
     } catch (tableError) {
       console.error('❌ Consultations table check failed:', tableError)
       return NextResponse.json(
-        { 
+        {
           error: 'Таблиця консультацій не існує або недоступна',
-          details: tableError instanceof Error ? tableError.message : 'Unknown table error',
-          hint: 'Можливо потрібно запустити міграції: npx prisma migrate deploy'
+          details:
+            tableError instanceof Error
+              ? tableError.message
+              : 'Unknown table error',
+          hint: 'Можливо потрібно запустити міграції: npx prisma migrate deploy',
         },
         { status: 500 }
       )
@@ -67,14 +71,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, id: consultation.id })
   } catch (error) {
     console.error('Error in POST:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error'
     const errorStack = error instanceof Error ? error.stack : undefined
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Помилка створення консультації',
         details: errorMessage,
-        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
       },
       { status: 500 }
     )
