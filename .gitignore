@@ -16,3 +16,4 @@ prisma/dev.db-journal
 prisma/schema.sqlite.backup
 prisma/schema.dev.backup
 prisma/schema.temp.prisma
+prisma/schema.prisma.temp
